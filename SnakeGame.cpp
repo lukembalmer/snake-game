@@ -3,6 +3,8 @@
 #include <cstdlib>
 #include <Windows.h>
 #include <conio.h>
+#include <fstream>
+#include <string>
 using namespace std;
 
 bool gameOver, gameStart, deathWallMode;
@@ -195,6 +197,34 @@ int main()
 	}
 	system("cls");
 	cout << "Game Over!" << endl << "Your score was: " << score << endl;
+	int highScore;
+	string bestPlayer;
+	ifstream infile ("snakehighscores.txt");
+	if(infile.is_open())
+	{
+		infile >> highScore;
+		infile >> bestPlayer;
+	}
+	
+	infile.close();
+	cout << "High Score: " << highScore << " by " << bestPlayer << endl;
+	if(score > highScore)
+	{
+		cout << "Congrats! You beat the high score by " << score - highScore << " points!" << endl;
+		cout << "Please record your initials(ex: LB)(do not use spaces): " << endl;
+		cin >> bestPlayer;
+		highScore = score;
+		cout << "New High Score: " << highScore << " by " << bestPlayer << endl;
+		ofstream outfile ("snakehighscores.txt");
+		outfile << highScore << endl << bestPlayer << endl;
+		outfile.close();
+	}
+	
+	if(gameStart == false)
+		cout << "Please restart and ensure you properly enter 1 to start the game." << endl;
+	
+	
+	
 	
 	return 0;
 }
