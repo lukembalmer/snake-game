@@ -40,12 +40,12 @@ void setup()
 	cout <<	"          \\      ~-____-~    _-~    ~-_    ~-_-~    /" << endl;
 	cout <<	"           ~-_           _-~          ~-_       _-~" << endl;
 	cout <<	"               ~--______-~                ~-___-~ " << endl;
-	cout << "Would you like to die when hitting a wall(enter 1), or play Pac-Man style(enter 0)?" << endl;
+	cout << "If you would like to play with regular rules enter 1, or to play Pac-Man style, enter 0: " << endl;
 	cin >> deathWallMode;
 	if(deathWallMode == true)
 		cout << "Death wall mode confirmed." << endl;
 	else
-		cout << "Pac-Man mode confirmed." << endl;
+		cout << "Pac-Man mode confirmed. High scores are unavailable in this mode." << endl;
 	cout << "Enter 1 to start game: " << endl;
 	cin >> gameStart;
 	
@@ -197,27 +197,32 @@ int main()
 	}
 	system("cls");
 	cout << "Game Over!" << endl << "Your score was: " << score << endl;
-	int highScore;
-	string bestPlayer;
-	ifstream infile ("snakehighscores.txt");
-	if(infile.is_open())
-	{
-		infile >> highScore;
-		infile >> bestPlayer;
-	}
 	
-	infile.close();
-	cout << "High Score: " << highScore << " by " << bestPlayer << endl;
-	if(score > highScore)
+	if(deathWallMode == true)
 	{
-		cout << "Congrats! You beat the high score by " << score - highScore << " points!" << endl;
-		cout << "Please record your initials(ex: LB)(do not use spaces): " << endl;
-		cin >> bestPlayer;
-		highScore = score;
-		cout << "New High Score: " << highScore << " by " << bestPlayer << endl;
-		ofstream outfile ("snakehighscores.txt");
-		outfile << highScore << endl << bestPlayer << endl;
-		outfile.close();
+		int highScore;
+		string bestPlayer;
+		ifstream infile ("snakehighscores.txt");
+		if(infile.is_open())
+		{
+			infile >> highScore;
+			infile >> bestPlayer;
+		}
+		
+		infile.close();
+		cout << "High Score: " << highScore << " by " << bestPlayer << endl;
+		
+		if(score > highScore)
+		{
+			cout << "Congrats! You beat the high score by " << score - highScore << " points!" << endl;
+			cout << "Please record your initials(ex: LB)(do not use spaces): " << endl;
+			cin >> bestPlayer;
+			highScore = score;
+			cout << "New High Score: " << highScore << " by " << bestPlayer << endl;
+			ofstream outfile ("snakehighscores.txt");
+			outfile << highScore << endl << bestPlayer << endl;
+			outfile.close();
+		}
 	}
 	
 	if(gameStart == false)
