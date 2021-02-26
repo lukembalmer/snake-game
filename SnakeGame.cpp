@@ -1,9 +1,9 @@
 //Snake Game by Luke Balmer 2/20/21
 #include <iostream>
 #include <cstdlib>
-#include <Windows.h>
-#include <conio.h>
-#include <fstream>
+#include <Windows.h> //system functions like "cls"
+#include <conio.h> //input functions, _kbhit() and _getch()
+#include <fstream> //used to read/write highscores to highscores.txt
 #include <string>
 using namespace std;
 
@@ -17,12 +17,63 @@ enum eDirection {STOP = 0, LEFT, RIGHT, UP, DOWN};
 eDirection dir;
 void setup(), draw(), input(), logic();
 
+int main()//calls setup, then loops through draw, input, and logic, then displays game over screen and reads/writes to highscores file if applicable
+{
+	setup();
+	while(!gameOver && gameStart == true)
+	{
+		draw();
+		if (dir == UP || dir == DOWN)//matches vertical speed to horizontal speed, because the spaces between lines(vertical) are greater than between side-by-side characters(horizontal)
+		{
+			Sleep(25);
+		}
+		
+		input();
+		logic();
+	}
+	system("cls");
+	Sleep(100);//want to slightly pause after game end to allow player to stop pressing button, which could end program before they can read screen or input initials
+	cout << "Game Over!" << endl;
+	cout << "Your score was: " << score << endl;
+	
+	if(deathWallMode == true)//only reads and writes to snakehighscores.txt if player is using reg. ruleset, see line 102
+	{
+		int highScore;
+		string bestPlayer;
+		ifstream infile ("snakehighscores.txt");
+		if(infile.is_open())
+		{
+			infile >> highScore;
+			infile >> bestPlayer;
+		}
+		
+		infile.close();
+		cout << "High Score: " << highScore << " by " << bestPlayer << endl;
+		
+		if(score > highScore)
+		{
+			cout << "Congrats! You beat the high score by " << score - highScore << " points!" << endl;
+			cout << "Please record your initials(ex: LB)(do not use spaces): " << endl;
+			cin >> bestPlayer;
+			highScore = score;
+			cout << "New High Score: " << highScore << " by " << bestPlayer << endl;
+			ofstream outfile ("snakehighscores.txt");
+			outfile << highScore << endl << bestPlayer << endl;
+			outfile.close();
+		}
+	}
+	
+	if(gameStart == false)
+		cout << "Please restart and ensure you properly enter 1 to start the game." << endl;
+	
+	return 0;
+}
 
 void setup()
 {
 	gameOver = false;
 	cout << "Welcome to Snake! Use WASD to move and K to end game." << endl;
-	
+//each of the backslashes in the ascii art below has to double up because of the backslash's use in strings(fun fact :) )
 	cout << "	   /^\\/^\\ " << endl;
 	cout <<	"         _|_O|  O|" << endl;
 	cout <<	"\\/     /~     \\_/ \\ " << endl;
@@ -43,30 +94,31 @@ void setup()
 	cout << "If you would like to play with regular rules enter 1, or to play Pac-Man style, enter 0: " << endl;
 	cin >> deathWallMode;
 	if(deathWallMode == true)
-		cout << "Death wall mode confirmed." << endl;
+		cout << "Regular snake ruleset confirmed." << endl;
 	else
-		cout << "Pac-Man mode confirmed. High scores are unavailable in this mode." << endl;
+		cout << "Pac-Man mode confirmed. High scores are unavailable in this mode." << endl;//do not want highscores inflated by players on easier rules
 	cout << "Enter 1 to start game: " << endl;
 	cin >> gameStart;
 	
-	
 	dir = STOP;
-	x = 3;
+	x = 3;//two starting coords for snake head, can be changed to wherever in the matrix
 	y = 2;
-	fruitX = rand() % width;
+	fruitX = rand() % width;//fruit spawn
 	fruitY = rand() % height;
 	score = 0;
 }
-void draw()
+
+void draw()//outputs boundaries, fruit, and snake head/tail to console
 {
-	system("cls");
+	system("cls"); //clears screen of previous text
+	
 	for(int i = 0; i < width + 2; i++)//top on-screen boundary
 		cout << "#";
 	cout << endl;
 	
-	for(int i = 0; i < height; i++)
+	for(int i = 0; i < height; i++)//tells how many rows to draw 
 	{
-		for(int j = 0; j < width + 1; j++)//row
+		for(int j = 0; j < width + 1; j++)//determines what each char in a row should be
 		{
 			if(j == 0 || j == width)
 			 	cout << "#";
@@ -98,7 +150,8 @@ void draw()
 	cout << endl;
 	cout << "Score: " << score << endl;
 }
-void input()
+
+void input()//this function looks for new input and gives any updates to logic() through dir enumerator, which allows logic to execute over and over based on that direction
 {
 	if (_kbhit())
 	{
@@ -122,7 +175,8 @@ void input()
 		}
 	}
 }
-void logic()
+
+void logic()//ensures tail follows head, executes changes to direction, provides collision detection for both tail and wall, and respawns fruit
 {
 	for(int i = nTail; i > 0; i--)//iterates through 2 arrays, assigning new coords based on where the segment in front just was
 	{
@@ -149,11 +203,11 @@ void logic()
 	
 	if(deathWallMode == true)
 	{	
-		if(x > width - 1 || x < 0 || y > height || y < 0)
+		if(x > width - 1 || x < 0 || y > height || y < 0)//wall collision detection: if coords exceed matrix boundaries game over
 			gameOver = true;
 	}
-	else
-	{
+	else//but, if player selects pac-man style,
+	{//code below will allow snake to survive going out of bounds, and appear on the other side pacman style.
 		if(x >= width - 1)
 			x = 0; 
 		else if(x < 0)
@@ -161,7 +215,7 @@ void logic()
 		if(y >= height)
 			y = 0; 
 		else if(y < 0)
-			y = height - 1;  //code to the right will allow snake to survive going out of bounds, and appear on the other side pacman style.
+			y = height - 1;  
 	}
 	
 	for(int i = 0; i < nTail; i++)//collision detection: iterates through tail
@@ -170,66 +224,11 @@ void logic()
 			gameOver = true;//end game
 	}
 	
-	if(x == fruitX && y == fruitY)
+	if(x == fruitX && y == fruitY)//detects fruit being eaten, ups score, and respawns fruit elsewhere
 	{
 		score += 100;
 		fruitX = rand() % width;
 		fruitY = rand() % height;
 		nTail++;
 	}
-
-}
-
-int main()
-{
-	setup();
-	while(!gameOver && gameStart == true)
-	{
-		draw();
-		if (dir == UP || dir == DOWN)
-		{
-			Sleep(25);
-		}
-		
-		input();
-		logic();
-	//	unsigned sleep(1000);
-	}
-	system("cls");
-	cout << "Game Over!" << endl << "Your score was: " << score << endl;
-	
-	if(deathWallMode == true)
-	{
-		int highScore;
-		string bestPlayer;
-		ifstream infile ("snakehighscores.txt");
-		if(infile.is_open())
-		{
-			infile >> highScore;
-			infile >> bestPlayer;
-		}
-		
-		infile.close();
-		cout << "High Score: " << highScore << " by " << bestPlayer << endl;
-		
-		if(score > highScore)
-		{
-			cout << "Congrats! You beat the high score by " << score - highScore << " points!" << endl;
-			cout << "Please record your initials(ex: LB)(do not use spaces): " << endl;
-			cin >> bestPlayer;
-			highScore = score;
-			cout << "New High Score: " << highScore << " by " << bestPlayer << endl;
-			ofstream outfile ("snakehighscores.txt");
-			outfile << highScore << endl << bestPlayer << endl;
-			outfile.close();
-		}
-	}
-	
-	if(gameStart == false)
-		cout << "Please restart and ensure you properly enter 1 to start the game." << endl;
-	
-	
-	
-	
-	return 0;
 }
